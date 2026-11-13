@@ -33,7 +33,8 @@ jobs:
         run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
 
       - name: Build LyricDrive APK
-        run: gradle :app:assembleDebug --no-daemon
+        run: gradle :app:assembleDebug --no-daemon --stacktrace --info
+
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
