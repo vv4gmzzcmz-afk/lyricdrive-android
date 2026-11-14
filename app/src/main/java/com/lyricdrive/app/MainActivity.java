@@ -81,6 +81,60 @@ public class MainActivity extends Activity {
             checkMicrophonePermission()
         );
         root.addView(micButton);
+    
+        Button playButton = new Button(this);
+        playButton.setText("PLAY RECORDING");
+
+        playButton.setOnClickListener(v -> {
+
+          java.io.File audioFile = new java.io.File(
+              getFilesDir(), "radio_sample.wav"
+          );
+
+          if (!audioFile.exists()) {
+              updateStatus("No WAV recording found");
+              return;
+          }
+
+          playButton.setEnabled(false);
+
+          try {
+              android.media.MediaPlayer player =
+                  new android.media.MediaPlayer();
+
+              player.setDataSource(
+                  audioFile.getAbsolutePath()
+              );
+
+              player.setOnCompletionListener(mp -> {
+                  mp.release();
+                  playButton.setEnabled(true);
+                  updateStatus("Playback completed");
+              });
+
+              player.setOnErrorListener(
+                  (mp, what, extra) -> {
+                      mp.release();
+                      playButton.setEnabled(true);
+                      updateStatus("Playback failed");
+                      return true;
+                  }
+              );
+
+              player.prepare();
+              player.start();
+
+              updateStatus("Playing recorded WAV...");
+
+          } catch (Exception e) {
+              playButton.setEnabled(true);
+              updateStatus(
+                  "Playback error: " + e.getMessage()
+              );
+          }
+      });
+
+      root.addView(playButton);
 
         statusText = makeText(
             "Ready to test microphone",
