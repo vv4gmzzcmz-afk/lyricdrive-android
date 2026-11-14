@@ -153,7 +153,7 @@ public class MainActivity extends Activity {
 
         testing = true;
         micButton.setEnabled(false);
-        updateStatus("Recording for 3 seconds...");
+        updateStatus("Recording for 10 seconds...");
 
         new Thread(() -> {
 
@@ -208,7 +208,7 @@ public class MainActivity extends Activity {
                 int totalSamples = 0;
 
                 long end = android.os.SystemClock
-                    .elapsedRealtime() + 3000;
+                    .elapsedRealtime() + 10000;
 
                 while (android.os.SystemClock
                     .elapsedRealtime() < end) {
