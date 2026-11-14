@@ -147,127 +147,56 @@ public class MainActivity extends Activity {
         }
     }
 
+    
     private void startMicrophoneTest() {
 
         if (testing) return;
 
         testing = true;
         micButton.setEnabled(false);
-        updateStatus("Recording for 10 seconds...");
+
+        updateStatus("Recording WAV for 10 seconds...");
 
         new Thread(() -> {
 
-            AudioRecord recorder = null;
-            String result = "Microphone test failed";
+            String result;
 
             try {
-                int rate = 16000;
 
-                int minBuffer = AudioRecord.getMinBufferSize(
-                    rate,
-                    AudioFormat.CHANNEL_IN_MONO,
-                    AudioFormat.ENCODING_PCM_16BIT
-                );
-
-                if (minBuffer <= 0) {
-                    throw new Exception(
-                        "Audio format not supported"
-                    );
-                }
-
-                int bufferSize = Math.max(
-                    minBuffer * 2, 4096
-                );
-
-                recorder = new AudioRecord(
-                    MediaRecorder.AudioSource.MIC,
-                    rate,
-                    AudioFormat.CHANNEL_IN_MONO,
-                    AudioFormat.ENCODING_PCM_16BIT,
-                    bufferSize
-                );
-
-                if (recorder.getState() !=
-                    AudioRecord.STATE_INITIALIZED) {
-                    throw new Exception(
-                        "Microphone unavailable"
-                    );
-                }
-
-                recorder.startRecording();
-
-                if (recorder.getRecordingState() !=
-                    AudioRecord.RECORDSTATE_RECORDING) {
-                    throw new Exception(
-                        "Recording could not start"
-                    );
-                }
-
-                short[] samples = new short[1024];
-                int peak = 0;
-                int totalSamples = 0;
-
-                long end = android.os.SystemClock
-                    .elapsedRealtime() + 10000;
-
-                while (android.os.SystemClock
-                    .elapsedRealtime() < end) {
-
-                    int count = recorder.read(
-                        samples, 0, samples.length
+                java.io.File wavFile =
+                    WavRecorder.record(
+                        getApplicationContext()
                     );
 
-                    if (count < 0) {
-                        throw new Exception(
-                            "Audio read failed: " + count
-                        );
-                    }
+                long fileSize = wavFile.length();
 
-                    for (int i = 0; i < count; i++) {
-                        int amplitude =
-                            Math.abs((int) samples[i]);
-
-                        if (amplitude > peak) {
-                            peak = amplitude;
-                        }
-                    }
-
-                    totalSamples += count;
-                }
-
-                if (totalSamples == 0) {
-                    result = "No audio samples received";
-                } else if (peak > 250) {
-                    result = "Audio signal detected! Peak: "
-                        + peak;
+                if (fileSize <= 44) {
+                    result = "Recording failed: Empty WAV";
                 } else {
-                    result = "Very low audio signal. Peak: "
-                        + peak;
+                    result = "WAV saved: "
+                        + wavFile.getName()
+                        + " (" + fileSize
+                        + " bytes)";
                 }
 
             } catch (Exception e) {
-                result = "Test error: " + e.getMessage();
 
-            } finally {
-                if (recorder != null) {
-                    try {
-                        if (recorder.getRecordingState() ==
-                            AudioRecord.RECORDSTATE_RECORDING) {
-                            recorder.stop();
-                        }
-                    } catch (Exception ignored) {}
+                result = "Recording error: "
+                    + e.getMessage();
 
-                    recorder.release();
-                }
-
-                final String message = result;
-
-                runOnUiThread(() -> {
-                    testing = false;
-                    micButton.setEnabled(true);
-                    updateStatus(message);
-                });
             }
+
+            final String message = result;
+
+            runOnUiThread(() -> {
+
+                testing = false;
+
+                micButton.setEnabled(true);
+
+                updateStatus(message);
+
+            });
 
         }).start();
     }
